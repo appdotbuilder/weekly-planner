@@ -1,14 +1,38 @@
 
+import { promises as fs } from 'fs';
+import { join } from 'path';
 import { type CreateSectionInput, type Section } from '../schema';
 
-export const createSection = async (input: CreateSectionInput): Promise<Section> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is creating a new section (project) and persisting it in the database.
-    return Promise.resolve({
-        id: 0, // Placeholder ID
-        name: input.name,
-        description: input.description || null,
-        created_at: new Date(),
-        updated_at: new Date()
-    } as Section);
-};
+const SECTIONS_DIR = join(process.cwd(), 'data', 'sections');
+
+export async function createSection(input: CreateSectionInput): Promise<Section> {
+  const sectionPath = join(SECTIONS_DIR, `${input.name}.json`);
+  const newSection: Section = {
+    name: input.name,
+    tasks: []
+  };
+
+  try {
+    // Ensure sections directory exists
+    await fs.mkdir(SECTIONS_DIR, { recursive: true });
+
+    // Check if section already exists
+    try {
+      await fs.access(sectionPath);
+      throw new Error('Section already exists');
+    } catch (error) {
+      // File doesn't exist, which is what we want
+      if ((error as any).code !== 'ENOENT') {
+        throw error;
+      }
+    }
+
+    // Create new section file
+    await fs.writeFile(sectionPath, JSON.stringify(newSection, null, 2));
+
+    return newSection;
+  } catch (error) {
+    console.error('Section creation failed:', error);
+    throw error;
+  }
+}

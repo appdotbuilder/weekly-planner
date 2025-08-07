@@ -1,18 +1,17 @@
 
 import { z } from 'zod';
 
-// Task priority enum
+// Priority enum for tasks
 export const taskPrioritySchema = z.enum(['High', 'Medium', 'Low']);
 export type TaskPriority = z.infer<typeof taskPrioritySchema>;
 
-// Task schema
+// Task schema for JSON storage
 export const taskSchema = z.object({
-  id: z.number(),
+  id: z.string(), // UUID string for unique identification
   description: z.string(),
   priority: taskPrioritySchema,
-  due_date: z.coerce.date().nullable(),
-  comments: z.string().nullable(),
-  section_id: z.number(),
+  due_date: z.coerce.date().nullable(), // Can be null if no due date
+  comments: z.string().nullable(), // Can be null if no comments
   completed: z.boolean(),
   created_at: z.coerce.date(),
   updated_at: z.coerce.date()
@@ -20,22 +19,29 @@ export const taskSchema = z.object({
 
 export type Task = z.infer<typeof taskSchema>;
 
-// Input schema for creating tasks
+// Section (project) schema for JSON storage
+export const sectionSchema = z.object({
+  name: z.string(), // Section name used as filename
+  tasks: z.array(taskSchema)
+});
+
+export type Section = z.infer<typeof sectionSchema>;
+
+// Input schemas for task operations
 export const createTaskInputSchema = z.object({
-  description: z.string().min(1, "Description is required"),
+  section_name: z.string(),
+  description: z.string(),
   priority: taskPrioritySchema,
   due_date: z.coerce.date().nullable().optional(),
-  comments: z.string().nullable().optional(),
-  section_id: z.number(),
-  completed: z.boolean().optional().default(false)
+  comments: z.string().nullable().optional()
 });
 
 export type CreateTaskInput = z.infer<typeof createTaskInputSchema>;
 
-// Input schema for updating tasks
 export const updateTaskInputSchema = z.object({
-  id: z.number(),
-  description: z.string().min(1).optional(),
+  section_name: z.string(),
+  task_id: z.string(),
+  description: z.string().optional(),
   priority: taskPrioritySchema.optional(),
   due_date: z.coerce.date().nullable().optional(),
   comments: z.string().nullable().optional(),
@@ -44,72 +50,66 @@ export const updateTaskInputSchema = z.object({
 
 export type UpdateTaskInput = z.infer<typeof updateTaskInputSchema>;
 
-// Section (Project) schema
-export const sectionSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  description: z.string().nullable(),
-  created_at: z.coerce.date(),
-  updated_at: z.coerce.date()
+export const deleteTaskInputSchema = z.object({
+  section_name: z.string(),
+  task_id: z.string()
 });
 
-export type Section = z.infer<typeof sectionSchema>;
+export type DeleteTaskInput = z.infer<typeof deleteTaskInputSchema>;
 
-// Input schema for creating sections
+// Section operation schemas
 export const createSectionInputSchema = z.object({
-  name: z.string().min(1, "Section name is required"),
-  description: z.string().nullable().optional()
+  name: z.string()
 });
 
 export type CreateSectionInput = z.infer<typeof createSectionInputSchema>;
 
-// Input schema for updating sections
-export const updateSectionInputSchema = z.object({
-  id: z.number(),
-  name: z.string().min(1).optional(),
-  description: z.string().nullable().optional()
+export const deleteSectionInputSchema = z.object({
+  name: z.string()
 });
 
-export type UpdateSectionInput = z.infer<typeof updateSectionInputSchema>;
+export type DeleteSectionInput = z.infer<typeof deleteSectionInputSchema>;
 
-// Weekly plan schema
+export const renameSectionInputSchema = z.object({
+  old_name: z.string(),
+  new_name: z.string()
+});
+
+export type RenameSectionInput = z.infer<typeof renameSectionInputSchema>;
+
+// Weekly plan schema for markdown storage
 export const weeklyPlanSchema = z.object({
-  id: z.number(),
-  monday_date: z.coerce.date(),
-  title: z.string(),
-  content: z.string(),
+  week_start: z.coerce.date(), // Monday of the week
   short_week_note: z.string().nullable(),
-  created_at: z.coerce.date(),
-  updated_at: z.coerce.date()
+  content: z.string() // Full markdown content
 });
 
 export type WeeklyPlan = z.infer<typeof weeklyPlanSchema>;
 
-// Input schema for creating weekly plans
 export const createWeeklyPlanInputSchema = z.object({
-  monday_date: z.coerce.date(),
-  title: z.string().min(1, "Title is required"),
-  content: z.string(),
-  short_week_note: z.string().nullable().optional()
+  week_start: z.coerce.date(),
+  short_week_note: z.string().nullable().optional(),
+  content: z.string()
 });
 
 export type CreateWeeklyPlanInput = z.infer<typeof createWeeklyPlanInputSchema>;
 
-// Input schema for updating weekly plans
 export const updateWeeklyPlanInputSchema = z.object({
-  id: z.number(),
-  title: z.string().min(1).optional(),
-  content: z.string().optional(),
-  short_week_note: z.string().nullable().optional()
+  week_start: z.coerce.date(),
+  short_week_note: z.string().nullable().optional(),
+  content: z.string().optional()
 });
 
 export type UpdateWeeklyPlanInput = z.infer<typeof updateWeeklyPlanInputSchema>;
 
-// Input schema for duplicating weekly plans
-export const duplicateWeeklyPlanInputSchema = z.object({
-  source_plan_id: z.number(),
-  new_monday_date: z.coerce.date(),
-  new_title: z.string().min(1, "Title is required")
+export const getWeeklyPlanInputSchema = z.object({
+  week_start: z.coerce.date()
 });
 
-export type DuplicateWeeklyPlanInput = z.infer<typeof duplicateWeeklyPlanInputSchema>;
+export type GetWeeklyPlanInput = z.infer<typeof getWeeklyPlanInputSchema>;
+
+export const deleteWeeklyPlanInputSchema = z.object({
+  week_start: z.coerce.date()
+});
+
+export type DeleteWeeklyPlanInput = z.infer<typeof deleteWeeklyPlanInputSchema>;
